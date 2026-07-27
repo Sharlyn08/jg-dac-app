@@ -6,11 +6,11 @@ import io
 from datetime import datetime
 from pathlib import Path
 from contextlib import asynccontextmanager
-
+import jinja2 as _jinja2
 from fastapi import FastAPI, Request, Form, File, UploadFile, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+
 import anthropic
 from docx import Document
 
@@ -78,8 +78,26 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-templates = Jinja2Templates(directory="templates")
-templates.env.cache = None  # Disable LRU cache — prevents unhashable dict error
+# ---------------------------------------------------------------------------
+# Template engine — direct Jinja2, bypasses Starlette wrapper entirely
+# ---------------------------------------------------------------------------
+class _Templates:
+    """Minimal Jinja2 renderer — avoids Starlette's TemplateResponse/globals
+    hash issue that causes TypeError: unhashable type: 'dict'."""
+
+    def __init__(self, directory: str):
+        self.env = _jinja2.Environment(
+            loader=_jinja2.FileSystemLoader(directory),
+            autoescape=_jinja2.select_autoescape(["html"]),
+            cache_size=0,
+        )
+
+    def TemplateResponse(self, name: str, context: dict, **_) -> HTMLResponse:
+        html = self.env.get_template(name).render(**context)
+        return HTMLResponse(html)
+
+
+templates = _Templates("templates")
 
 
 # ---------------------------------------------------------------------------
