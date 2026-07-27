@@ -591,6 +591,18 @@ async def confirm_ratings(request: Request, candidate_id: str, activity_code: st
         conn.close()
         raise HTTPException(status_code=404)
 
+    # CBI only: the form never sends "narrative" (it's not a user-editable field),
+    # so carry it forward from analysis_json into the confirmed payload.
+    if activity_code == "cbi" and act["analysis_json"]:
+        try:
+            analysis = json.loads(act["analysis_json"])
+            for comp_code, comp_data in analysis.get("competencies", {}).items():
+                narrative = comp_data.get("narrative")
+                if narrative and comp_code in body.get("competencies", {}):
+                    body["competencies"][comp_code]["narrative"] = narrative
+        except Exception:
+            pass
+
     conn.execute(
         "UPDATE activities SET confirmed_json=?, status='confirmed', confirmed_at=? WHERE id=?",
         (json.dumps(body), datetime.utcnow().isoformat(), act["id"])
