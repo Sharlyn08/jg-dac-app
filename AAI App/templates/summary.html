@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Summary — {{ cand.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="/">Candidates</a></li>
+    <li class="breadcrumb-item"><a href="/candidates/{{ cand.id }}">{{ cand.name }}</a></li>
+    <li class="breadcrumb-item active">Summary</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 fw-semibold mb-0">{{ cand.name }}</h1>
+    <p class="text-muted small mb-0">{{ cand.position or '—' }} · {{ cand.assessment_date or '—' }}</p>
+    <p class="text-muted small">{{ cand.assessors or '' }} · <span class="badge" style="background:#D9E2F3;color:#1F3864;">{{ prog_name }}</span></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/candidates/{{ cand.id }}/report/download"
+       class="btn btn-primary btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-word me-1"></i>Download DAC Report
+    </a>
+    <a href="/candidates/{{ cand.id }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+
+{% set confirmed_acts = [] %}
+{% for code, act in cand.activities.items() %}
+  {% if act.status == 'confirmed' %}{% set _ = confirmed_acts.append(code) %}{% endif %}
+{% endfor %}
+
+{% if not confirmed_acts %}
+<div class="alert alert-info">
+  <i class="bi bi-info-circle me-2"></i>No activities have been confirmed yet. Verify and confirm each activity to see the consolidated summary.
+</div>
+{% else %}
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold" style="background:#1F3864;color:#fff;">
+    <i class="bi bi-bar-chart-fill me-2"></i>Consolidated Scores
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0 summary-table">
+        <thead style="background:#f0f4fa;">
+          <tr>
+            <th style="min-width:180px;">Competency</th>
+            {% for act_code in activity_defs.keys() %}
+              {% if act_code in activity_scores %}
+              <th class="text-center">{{ activity_defs[act_code].short }}</th>
+              {% endif %}
+            {% endfor %}
+            <th class="text-center" style="background:#1F3864;color:#fff;">Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comp_code, comp_meta in COMP_META.items() %}
+          {% set has_data = comp_code in consolidated %}
+          {% if has_data %}
+          <tr>
+            <td>
+              <div class="fw-medium small">{{ comp_code }}</div>
+              <div class="text-muted" style="font-size:0.78rem;">{{ comp_meta.name }}</div>
+            </td>
+            {% for act_code in activity_defs.keys() %}
+              {% if act_code in activity_scores %}
+              {% set score = activity_scores[act_code].get(comp_code) %}
+              <td class="text-center align-middle">
+                {% if score %}
+                <span class="score-pill score-{{ score }}">{{ score }}</span>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              {% endif %}
+            {% endfor %}
+            <td class="text-center align-middle" style="background:#f0f4fa;">
+              {% set final = consolidated.get(comp_code) %}
+              {% if final %}
+              <span class="score-pill score-{{ final }} score-final">{{ final }}</span>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="d-flex flex-wrap gap-3 mb-4">
+  {% for r, label in LEVEL_LABELS.items() %}
+  <div class="d-flex align-items-center gap-2">
+    <span class="score-pill score-{{ r }}">{{ r }}</span>
+    <span class="small text-muted">{{ label }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Per-activity detail -->
+<h2 class="h6 fw-semibold text-muted mb-3 mt-4">Activity Detail</h2>
+{% for act_code, act_def in activity_defs.items() %}
+{% set act = cand.activities.get(act_code, {}) %}
+{% if act.get('status') == 'confirmed' %}
+{% set act_data = activity_details.get(act_code, {}) %}
+<div class="card mb-3">
+  <div class="card-header small fw-semibold d-flex justify-content-between">
+    <span>{{ act_def.name }}</span>
+    <a href="/candidates/{{ cand.id }}/activities/{{ act_code }}/verify"
+       class="text-decoration-none small"><i class="bi bi-pencil me-1"></i>Edit</a>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead style="background:#f8f9fa;">
+        <tr>
+          <th>Competency / KBI</th>
+          <th class="text-center" style="width:80px;">Rating</th>
+          <th>Evidence / Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for comp_code in act_def.competencies.keys() %}
+        {% set comp_an = act_data.get('competencies', {}).get(comp_code, {}) %}
+        <tr class="table-secondary">
+          <td class="fw-medium small">
+            {{ comp_code }} — {{ COMP_META[comp_code].name }}
+          </td>
+          <td class="text-center">
+            {% if comp_an.overall %}
+            <span class="score-pill score-{{ comp_an.overall }}">{{ comp_an.overall }}</span>
+            {% endif %}
+          </td>
+          <td class="small text-muted fst-italic">{{ comp_an.rationale or '' }}</td>
+        </tr>
+        {% for kbi in comp_an.get('kbis', []) %}
+        <tr>
+          <td class="small ps-4 text-muted">KBI {{ kbi.n }}: {{ kbi.title }}</td>
+          <td class="text-center">
+            <span class="score-pill score-{{ kbi.suggested_rating }}">{{ kbi.suggested_rating }}</span>
+          </td>
+          <td class="small" style="font-size:0.78rem;">{{ kbi.evidence or '—' }}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% endif %}
+{% endblock %}

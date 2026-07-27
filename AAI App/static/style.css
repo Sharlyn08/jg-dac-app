@@ -1,0 +1,139 @@
+/* ─── Brand palette ─────────────────────────────────────────────────── */
+:root {
+  --jg-navy:   #1F3864;
+  --jg-blue:   #2F5496;
+  --jg-light:  #D9E2F3;
+  --r1: #dc3545;
+  --r2: #fd7e14;
+  --r3: #198754;
+  --r4: #0a3622;
+}
+
+body { background: #f5f7fa; }
+
+/* ─── Candidate cards ───────────────────────────────────────────────── */
+.candidate-card {
+  border: 1px solid #dee2e6;
+  transition: box-shadow .15s, transform .15s;
+  cursor: pointer;
+}
+.candidate-card:hover {
+  box-shadow: 0 4px 16px rgba(31,56,100,.15);
+  transform: translateY(-2px);
+}
+
+/* ─── Activity status badges (home page) ────────────────────────────── */
+.act-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: .03em;
+}
+.act-pending   { background:#e9ecef; color:#6c757d; }
+.act-uploaded  { background:#cfe2ff; color:#084298; }
+.act-analyzing { background:#fff3cd; color:#664d03; }
+.act-ready     { background:#ffc107; color:#000; }
+.act-confirmed { background:#d1e7dd; color:#0a3622; }
+.act-error     { background:#f8d7da; color:#58151c; }
+
+/* ─── Activity cards (candidate detail) ─────────────────────────────── */
+.activity-card {
+  border-left: 4px solid #dee2e6;
+}
+.activity-pending   { border-left-color: #adb5bd; }
+.activity-uploaded  { border-left-color: #6ea8fe; }
+.activity-analyzing { border-left-color: #ffc107; }
+.activity-ready     { border-left-color: #fd7e14; }
+.activity-confirmed { border-left-color: #198754; }
+.activity-error     { border-left-color: #dc3545; }
+
+/* ─── Status badge (candidate detail, pill) ─────────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.status-pending   { background:#e9ecef; color:#6c757d; }
+.status-uploaded  { background:#cfe2ff; color:#084298; }
+.status-analyzing { background:#fff3cd; color:#664d03; }
+.status-ready     { background:#ffe5d0; color:#7c3400; }
+.status-confirmed { background:#d1e7dd; color:#0a3622; }
+.status-error     { background:#f8d7da; color:#58151c; }
+
+/* ─── Competency chips ──────────────────────────────────────────────── */
+.comp-chip {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--jg-light);
+  color: var(--jg-navy);
+  margin-right: 3px;
+}
+
+/* ─── Verify page ───────────────────────────────────────────────────── */
+.comp-header {
+  background: var(--jg-light);
+  color: var(--jg-navy);
+}
+.comp-header .fw-bold { color: var(--jg-navy); }
+
+.rating-group {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rating-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .1s, color .1s, border-color .1s, transform .08s;
+  padding: 0;
+  background: #fff;
+  color: #495057;
+}
+.rating-btn:hover { transform: scale(1.12); }
+
+.evidence-field {
+  font-size: 0.82rem;
+  background: #fafafa;
+  border-color: #dee2e6;
+  resize: vertical;
+}
+.evidence-field:focus { background: #fff; border-color: var(--jg-blue); }
+
+/* ─── Summary table ─────────────────────────────────────────────────── */
+.summary-table th { font-size: 0.82rem; font-weight: 600; }
+.summary-table td { font-size: 0.82rem; }
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #fff;
+}
+.score-final { width: 34px; height: 34px; font-size: 0.95rem; }
+.score-1 { background: var(--r1); }
+.score-2 { background: var(--r2); }
+.score-3 { background: var(--r3); }
+.score-4 { background: var(--r4); }

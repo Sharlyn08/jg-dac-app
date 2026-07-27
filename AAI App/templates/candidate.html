@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ cand.name }} — JG DAC Tool{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="/">Candidates</a></li>
+    <li class="breadcrumb-item active">{{ cand.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 fw-semibold mb-0">{{ cand.name }}</h1>
+    <p class="text-muted small mb-0">{{ cand.position or '—' }} · {{ cand.assessment_date or '—' }} · {{ cand.assessors or 'No assessors listed' }}</p>
+    <span class="badge mt-1" style="background:#D9E2F3;color:#1F3864;">{{ prog_name }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/candidates/{{ cand.id }}/summary" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-table me-1"></i> Summary
+    </a>
+    <form method="post" action="/candidates/{{ cand.id }}/delete" onsubmit="return confirm('Delete this candidate and all their data?')">
+      <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+{% for act_code, act_def in activity_defs.items() %}
+{% set act = cand.activities.get(act_code, {}) %}
+{% set status = act.get('status', 'pending') %}
+
+<div class="col-12 col-md-6">
+<div class="card activity-card activity-{{ status }}">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <span class="fw-semibold">{{ act_def.name }}</span>
+        <span class="text-muted small ms-1">({{ act_code.upper() }})</span>
+      </div>
+      <span class="status-badge status-{{ status }}">
+        {% if status == 'analyzing' %}
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        {% elif status == 'confirmed' %}<i class="bi bi-check-circle-fill me-1"></i>
+        {% elif status == 'ready' %}<i class="bi bi-circle-fill me-1" style="font-size:0.55rem;vertical-align:middle;"></i>
+        {% elif status == 'error' %}<i class="bi bi-exclamation-triangle-fill me-1"></i>
+        {% endif %}
+        {{ activity_status_label(status) }}
+      </span>
+    </div>
+
+    <div class="small text-muted mb-3">
+      Measures:
+      {% for comp in act_def.competencies.keys() %}
+        <span class="comp-chip">{{ comp }}</span>
+      {% endfor %}
+    </div>
+
+    {% if status == 'error' %}
+    <div class="alert alert-danger small py-2 mb-2">{{ act.get('error_msg', 'Unknown error') }}</div>
+    {% endif %}
+
+    {% if act.get('transcript_filename') %}
+    <div class="small text-muted mb-2">
+      <i class="bi bi-file-earmark-word me-1"></i>{{ act.transcript_filename }}
+    </div>
+    {% endif %}
+
+    <div class="d-flex gap-2 flex-wrap">
+      {% if status in ('pending', 'error') %}
+      <!-- Upload form -->
+      <form method="post" action="/candidates/{{ cand.id }}/activities/{{ act_code }}/upload"
+            enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+        <label class="btn btn-sm btn-outline-primary mb-0" for="file-{{ act_code }}">
+          <i class="bi bi-upload me-1"></i>Upload transcript (.docx)
+        </label>
+        <input id="file-{{ act_code }}" name="file" type="file" accept=".docx"
+               class="d-none" onchange="this.form.submit()">
+      </form>
+      {% elif status == 'uploaded' %}
+      <span class="text-muted small">Queued for analysis…</span>
+      {% elif status == 'analyzing' %}
+      <span class="text-muted small" id="poll-{{ act_code }}" data-cid="{{ cand.id }}" data-act="{{ act_code }}">
+        Analyzing transcript — this may take up to a minute…
+      </span>
+      {% elif status == 'ready' %}
+      <a href="/candidates/{{ cand.id }}/activities/{{ act_code }}/verify"
+         class="btn btn-sm btn-warning">
+        <i class="bi bi-check2-square me-1"></i>Verify AI ratings
+      </a>
+      <!-- Re-upload -->
+      <form method="post" action="/candidates/{{ cand.id }}/activities/{{ act_code }}/upload"
+            enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+        <label class="btn btn-sm btn-outline-secondary mb-0" for="reup-{{ act_code }}">
+          <i class="bi bi-arrow-repeat me-1"></i>Re-analyze
+        </label>
+        <input id="reup-{{ act_code }}" name="file" type="file" accept=".docx"
+               class="d-none" onchange="this.form.submit()">
+      </form>
+      {% elif status == 'confirmed' %}
+      <a href="/candidates/{{ cand.id }}/activities/{{ act_code }}/verify"
+         class="btn btn-sm btn-outline-success">
+        <i class="bi bi-pencil-square me-1"></i>Edit ratings
+      </a>
+      <a href="/candidates/{{ cand.id }}/activities/{{ act_code }}/download"
+         class="btn btn-sm btn-outline-primary" target="_blank">
+        <i class="bi bi-file-earmark-word me-1"></i>Download form
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Poll activities still in "analyzing" state
+document.querySelectorAll('[id^="poll-"]').forEach(el => {
+  const cid = el.dataset.cid;
+  const act = el.dataset.act;
+  const interval = setInterval(async () => {
+    const res = await fetch(`/candidates/${cid}/activities/${act}/status`);
+    const data = await res.json();
+    if (data.status !== 'analyzing') {
+      clearInterval(interval);
+      window.location.reload();
+    }
+  }, 4000);
+});
+</script>
+{% endblock %}

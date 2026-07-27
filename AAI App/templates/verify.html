@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Verify — {{ activity_def.name }} — {{ cand.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="/">Candidates</a></li>
+    <li class="breadcrumb-item"><a href="/candidates/{{ cand.id }}">{{ cand.name }}</a></li>
+    <li class="breadcrumb-item active">{{ activity_def.name }} — Verify</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 fw-semibold mb-0">{{ activity_def.name }}</h1>
+    <p class="text-muted small mb-0">{{ cand.name }} · {{ cand.assessment_date or '—' }}</p>
+    <p class="small text-muted">{{ act.transcript_filename or '' }}</p>
+  </div>
+  <div class="d-flex flex-column align-items-end gap-2">
+    {% if is_confirmed %}
+    <span class="badge py-2 px-3" style="background:#d1e7dd;color:#0a3622;">
+      <i class="bi bi-check-circle-fill me-1"></i>Confirmed
+    </span>
+    {% endif %}
+    <a href="/candidates/{{ cand.id }}/summary" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-table me-1"></i>View summary
+    </a>
+  </div>
+</div>
+
+<div id="saveStatus" class="alert d-none mb-4"></div>
+
+<div id="verifyForm"></div>
+
+<div class="d-flex gap-3 mt-3 mb-5 sticky-bottom py-3" style="background:rgba(255,255,255,0.95);border-top:1px solid #e0e0e0;">
+  <button class="btn btn-primary px-5" onclick="saveRatings()">
+    <i class="bi bi-check2-all me-1"></i>Confirm ratings
+  </button>
+  <a href="/candidates/{{ cand.id }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const COMP_ORDER   = {{ comp_order | tojson }};
+const ACTIVITY_DEF = {{ activity_def | tojson }};
+const ANALYSIS     = {{ analysis | tojson }};
+const COMP_META_JS = {{ COMP_META | tojson }};
+const CANDIDATE_ID  = "{{ cand.id }}";
+const ACTIVITY_CODE = "{{ activity_code }}";
+
+function ratingColor(r) {
+  return {1:'#dc3545', 2:'#fd7e14', 3:'#198754', 4:'#0a3622'}[r] || '#6c757d';
+}
+
+function applyBtnStyle(btn, isActive) {
+  const val = parseInt(btn.dataset.val);
+  if (isActive) {
+    btn.style.background = ratingColor(val);
+    btn.style.color = '#fff';
+    btn.style.borderColor = ratingColor(val);
+  } else {
+    btn.style.background = '';
+    btn.style.color = '#495057';
+    btn.style.borderColor = '#ced4da';
+  }
+}
+
+function setKbiRating(compCode, n, rating) {
+  const group = document.getElementById(`rg_kbi_${compCode}_${n}`);
+  group.querySelectorAll('.rating-btn').forEach(b => {
+    const active = parseInt(b.dataset.val) === rating;
+    b.classList.toggle('active', active);
+    applyBtnStyle(b, active);
+  });
+  document.getElementById(`kbi_${compCode}_${n}_rating`).value = rating;
+}
+
+function setOverallRating(compCode, rating) {
+  const group = document.getElementById(`rg_ov_${compCode}`);
+  group.querySelectorAll('.rating-btn').forEach(b => {
+    const active = parseInt(b.dataset.val) === rating;
+    b.classList.toggle('active', active);
+    applyBtnStyle(b, active);
+  });
+  document.getElementById(`ov_${compCode}`).value = rating;
+}
+
+function ratingBtns(groupId, current, clickFn) {
+  return `<div class="rating-group" id="${groupId}">
+    ${[1,2,3,4].map(r => {
+      const active = r === current;
+      const bg = active ? ratingColor(r) : '';
+      const col = active ? '#fff' : '#495057';
+      const bc = active ? ratingColor(r) : '#ced4da';
+      return `<button type="button" class="rating-btn${active ? ' active' : ''}" data-val="${r}"
+        style="background:${bg};color:${col};border-color:${bc};"
+        onclick="${clickFn(r)}">${r}</button>`;
+    }).join('')}
+  </div>`;
+}
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function buildForm() {
+  const container = document.getElementById('verifyForm');
+  const comps = ANALYSIS.competencies || {};
+
+  COMP_ORDER.forEach(compCode => {
+    const compDef = ACTIVITY_DEF.competencies[compCode];
+    const compAn  = comps[compCode] || {};
+    const kbiMap  = {};
+    (compAn.kbis || []).forEach(k => { kbiMap[k.n] = k; });
+
+    const overallRating = compAn.overall || 2;
+    const overallGroup  = ratingBtns(
+      `rg_ov_${compCode}`, overallRating,
+      r => `setOverallRating('${compCode}', ${r})`
+    );
+
+    let kbiRows = '';
+    compDef.kbis.forEach(kbiDef => {
+      const kd = kbiMap[kbiDef.n] || {};
+      const rating  = kd.suggested_rating || 2;
+      const evidence = esc(kd.evidence || '');
+      const kbiGroup = ratingBtns(
+        `rg_kbi_${compCode}_${kbiDef.n}`, rating,
+        r => `setKbiRating('${compCode}', ${kbiDef.n}, ${r})`
+      );
+
+      kbiRows += `
+        <div class="kbi-row mb-4 pb-3 border-bottom">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+            <div class="small fw-medium text-dark">
+              <span class="text-muted me-1">KBI ${kbiDef.n}</span>${esc(kbiDef.title)}
+            </div>
+            ${kbiGroup}
+          </div>
+          <input type="hidden" id="kbi_${compCode}_${kbiDef.n}_rating" value="${rating}">
+          <textarea class="form-control form-control-sm evidence-field"
+                    id="kbi_${compCode}_${kbiDef.n}_evidence"
+                    rows="3"
+                    placeholder="Evidence from transcript…">${evidence}</textarea>
+        </div>`;
+    });
+
+    const rationale = esc(compAn.rationale || '');
+
+    const card = document.createElement('div');
+    card.className = 'card mb-4';
+    card.innerHTML = `
+      <div class="card-header comp-header d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fw-bold">${compCode}</span>
+          <span class="text-muted ms-2 small">${COMP_META_JS[compCode]?.name || ''}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="small text-muted me-1">Overall:</span>
+          ${overallGroup}
+          <input type="hidden" id="ov_${compCode}" value="${overallRating}">
+        </div>
+      </div>
+      <div class="card-body">
+        ${kbiRows}
+        <div class="mt-1">
+          <label class="small fw-medium text-muted mb-1">Rationale for overall rating</label>
+          <textarea class="form-control form-control-sm" id="rationale_${compCode}"
+                    rows="2" placeholder="Brief rationale…">${rationale}</textarea>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+async function saveRatings() {
+  const payload = { competencies: {} };
+
+  COMP_ORDER.forEach(compCode => {
+    const compDef = ACTIVITY_DEF.competencies[compCode];
+    const kbis = compDef.kbis.map(kbiDef => ({
+      n: kbiDef.n,
+      title: kbiDef.title,
+      suggested_rating: parseInt(document.getElementById(`kbi_${compCode}_${kbiDef.n}_rating`)?.value || 2),
+      evidence: document.getElementById(`kbi_${compCode}_${kbiDef.n}_evidence`)?.value || ''
+    }));
+    payload.competencies[compCode] = {
+      kbis,
+      overall: parseInt(document.getElementById(`ov_${compCode}`)?.value || 2),
+      rationale: document.getElementById(`rationale_${compCode}`)?.value || ''
+    };
+  });
+
+  const btn = document.querySelector('[onclick="saveRatings()"]');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving…';
+
+  try {
+    const res = await fetch(`/candidates/${CANDIDATE_ID}/activities/${ACTIVITY_CODE}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const el = document.getElementById('saveStatus');
+      el.className = 'alert alert-success mb-4';
+      el.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Ratings confirmed!
+        <a href="/candidates/${CANDIDATE_ID}" class="alert-link ms-3">← Back to candidate</a>
+        <a href="/candidates/${CANDIDATE_ID}/summary" class="alert-link ms-3">View summary →</a>`;
+      el.classList.remove('d-none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      btn.innerHTML = '<i class="bi bi-check2-all me-1"></i>Confirmed';
+    }
+  } catch (e) {
+    const el = document.getElementById('saveStatus');
+    el.className = 'alert alert-danger mb-4';
+    el.textContent = 'Error saving ratings: ' + e.message;
+    el.classList.remove('d-none');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check2-all me-1"></i>Confirm ratings';
+  }
+}
+
+buildForm();
+</script>
+{% endblock %}
