@@ -81,11 +81,6 @@ app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Inject globals into all templates
-templates.env.globals["PROGRAMS"] = PROGRAMS
-templates.env.globals["COMP_META"] = COMP_META
-templates.env.globals["LEVEL_LABELS"] = LEVEL_LABELS
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -125,6 +120,17 @@ def activity_status_label(status: str) -> str:
 
 templates.env.globals["activity_status_label"] = activity_status_label
 templates.env.filters["fromjson"] = json.loads
+
+
+def _ctx(request: Request, **kwargs) -> dict:
+    """Build template context with shared data included."""
+    return {
+        "request": request,
+        "PROGRAMS": PROGRAMS,
+        "COMP_META": COMP_META,
+        "LEVEL_LABELS": LEVEL_LABELS,
+        **kwargs,
+    }
 
 
 def get_or_create_activity(conn, candidate_id: str, activity_code: str, program: str) -> dict:
@@ -303,7 +309,7 @@ async def home(request: Request):
         cand["activity_codes"] = list(prog.get("activities", {}).keys())
         enriched.append(cand)
     conn.close()
-    return templates.TemplateResponse("home.html", {"request": request, "candidates": enriched})
+    return templates.TemplateResponse("home.html", _ctx(request, candidates=enriched))
 
 
 @app.post("/candidates/new")
@@ -342,12 +348,12 @@ async def candidate_detail(request: Request, candidate_id: str):
     prog_code = cand.get("program", "accelerate")
     prog = PROGRAMS.get(prog_code, {})
     activity_defs = prog.get("activities", {})
-    return templates.TemplateResponse("candidate.html", {
-        "request": request,
-        "cand": cand,
-        "activity_defs": activity_defs,
-        "prog_name": prog.get("name", ""),
-    })
+    return templates.TemplateResponse("candidate.html", _ctx(
+        request,
+        cand=cand,
+        activity_defs=activity_defs,
+        prog_name=prog.get("name", ""),
+    ))
 
 
 @app.post("/candidates/{candidate_id}/activities/{activity_code}/upload")
@@ -438,17 +444,17 @@ async def verify_activity(request: Request, candidate_id: str, activity_code: st
 
     comp_order = get_comp_order(prog_code, activity_code)
 
-    return templates.TemplateResponse("verify.html", {
-        "request": request,
-        "cand": cand,
-        "act": act,
-        "activity_code": activity_code,
-        "activity_def": activity_def,
-        "analysis": display_data,
-        "confirmed": confirmed,
-        "comp_order": comp_order,
-        "is_confirmed": act["status"] == "confirmed",
-    })
+    return templates.TemplateResponse("verify.html", _ctx(
+        request,
+        cand=cand,
+        act=act,
+        activity_code=activity_code,
+        activity_def=activity_def,
+        analysis=display_data,
+        confirmed=confirmed,
+        comp_order=comp_order,
+        is_confirmed=act["status"] == "confirmed",
+    ))
 
 
 @app.post("/candidates/{candidate_id}/activities/{activity_code}/confirm")
@@ -508,15 +514,15 @@ async def candidate_summary(request: Request, candidate_id: str):
             except Exception:
                 activity_details[act_code] = {}
 
-    return templates.TemplateResponse("summary.html", {
-        "request": request,
-        "cand": cand,
-        "activity_defs": activity_defs,
-        "activity_scores": activity_scores,
-        "activity_details": activity_details,
-        "consolidated": consolidated,
-        "prog_name": prog.get("name", ""),
-    })
+    return templates.TemplateResponse("summary.html", _ctx(
+        request,
+        cand=cand,
+        activity_defs=activity_defs,
+        activity_scores=activity_scores,
+        activity_details=activity_details,
+        consolidated=consolidated,
+        prog_name=prog.get("name", ""),
+    ))
 
 
 @app.get("/candidates/{candidate_id}/activities/{activity_code}/download")
