@@ -1,14 +1,59 @@
 """
-KBI definitions for JG DAC programs.
-Each activity lists which competencies it measures and the KBIs under each.
+KBI definitions for JG DAC Accelerate program.
+Sourced directly from the 2026 official forms:
+  - JG_DAC A&H Analysis Rating Form (AP)
+  - JG_DAC Banco Group Exercise Rating Form (GE)
+  - JG_DAC Right to Wear Coaching Rating Form (CR)
+  - JFC_DAC Leadership Brand Interview Guide Form (CBI)
+
+Competency matrix (which activities assess which competencies):
+  AP  → Drive Superior Performance, Make a Difference, Establish Trust
+  GE  → Win Through People, Learn from Different Views, Make a Difference
+  CR  → Drive Superior Performance, Win Through People, Learn from Different Views, Establish Trust
+  CBI → All 5 competencies
 """
 
 COMP_META = {
-    "DSP": {"name": "Drive Superior Performance", "desc": "We are entrepreneurial; we collaborate across networks to realize the company's goals."},
-    "MaD": {"name": "Make a Difference", "desc": "We take the lead and make a difference through continuous innovation that drives positive change."},
-    "WTP": {"name": "Win Through People", "desc": "We earn commitment from our people. We hold each other accountable for performance with empathy and care."},
-    "LFDV": {"name": "Learn from Different Views", "desc": "We constantly learn from different ideas to improve. We respect others enough to tell them what we think."},
-    "ET": {"name": "Establish Trust", "desc": "We build the best team and trust them to make decisions and take calculated risks."},
+    "DSP": {
+        "name": "Drive Superior Performance",
+        "desc": (
+            "We are entrepreneurial; we believe in Jollibee Group's vision. "
+            "We collaborate across our internal, functional, and local networks "
+            "to realize the company's goals and vision."
+        ),
+    },
+    "WTP": {
+        "name": "Win Through People",
+        "desc": (
+            "We earn commitment from our people. We hold each other accountable "
+            "for performance with empathy and care. We build a culture of family, "
+            "joy, and inclusion."
+        ),
+    },
+    "LFDV": {
+        "name": "Learn from Different Views",
+        "desc": (
+            "We constantly learn from the different ideas of people to further improve. "
+            "We respect others enough to tell them what we think. We proactively "
+            "seek and share feedback."
+        ),
+    },
+    "MaD": {
+        "name": "Make a Difference",
+        "desc": (
+            "We take the lead and make a difference through continuous innovation "
+            "that drives positive change for the Jollibee Group. We value progress "
+            "over perfection."
+        ),
+    },
+    "ET": {
+        "name": "Establish Trust",
+        "desc": (
+            "We are aligned around our global perspective. We build the best team "
+            "and trust them to make decisions and take calculated risks so we can "
+            "make a positive impact."
+        ),
+    },
 }
 
 LEVEL_LABELS = {
@@ -22,198 +67,373 @@ PROGRAMS = {
     "accelerate": {
         "name": "Accelerate",
         "activities": {
+            # ──────────────────────────────────────────────────────────────
+            # ANALYSIS PRESENTATION — DSP, MaD, ET
+            # ──────────────────────────────────────────────────────────────
             "ap": {
                 "name": "Analysis Presentation",
                 "short": "AP",
-                "candidate_role": "Account Manager / Officer (presenting to senior management)",
+                "candidate_role": (
+                    "Officer presenting strategic analysis and recommendations "
+                    "to senior management (A&H Tissue fictional case)"
+                ),
                 "competencies": {
                     "DSP": {
                         "kbis": [
-                            {"n": 1, "title": "Communicates clear recommendations and rationale", "dac": "Communicates clear recommendations and rationale aligned to business priorities"},
-                            {"n": 2, "title": "Creates strategies and practical actions", "dac": "Develops strong strategies and practical actions to improve business performance"},
-                            {"n": 3, "title": "Acts with the customer in mind", "dac": "Considers customer impact and commercial implications in decisions"},
-                            {"n": 4, "title": "Anticipates risks and opportunities early", "dac": "Recognizes risks and opportunities early and recommends timely business action"},
+                            {
+                                "n": 1,
+                                "title": "Communicates a compelling and inspiring vision or purpose to energize the team",
+                                "dac": "Communicates clear recommendations and rationale aligned to business priorities",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Creates breakthrough strategies and stretched goals, and collaborates effectively to execute them with excellence",
+                                "dac": "Develops strong strategies and practical actions to improve business performance",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Acts with the customer in mind; delights our customers with exceptional products and services",
+                                "dac": "Considers customer impact and commercial implications in decisions",
+                            },
+                            {
+                                "n": 4,
+                                "title": "Anticipates, sees ahead, seeks, and rapidly acts on opportunities to elevate the business",
+                                "dac": "Recognizes risks and opportunities early and recommends timely business action",
+                            },
                         ]
                     },
                     "MaD": {
                         "kbis": [
-                            {"n": 1, "title": "Suggests practical improvements", "dac": "Suggests practical improvements to current business challenges"},
-                            {"n": 2, "title": "Takes initiative despite incomplete information", "dac": "Takes initiative in addressing issues despite incomplete information"},
-                            {"n": 3, "title": "Tests alternatives and adapts recommendations", "dac": "Tests alternatives, adapts recommendations, and incorporates broader perspectives"},
+                            {
+                                "n": 1,
+                                "title": "Drives change and leads with courage; perseveres despite ambiguity",
+                                "dac": "Suggests practical improvements to current business challenges",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Champions experimentation and encourages tenacity in learning and improving",
+                                "dac": "Takes initiative in addressing issues despite incomplete information",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Remains curious and open to new ideas and experiences and considers issues from a multi-cultural or geographic (regional/global) perspective",
+                                "dac": "Tests alternatives, adapts recommendations, and incorporates broader perspectives to improve outcomes",
+                            },
                         ]
                     },
                     "ET": {
                         "kbis": [
-                            {"n": 1, "title": "Makes clear decisions and takes accountability", "dac": "Makes clear and timely decisions, takes accountability, and demonstrates ownership"},
-                            {"n": 2, "title": "Balances stewardship and long-term impact", "dac": "Balances short-term decisions with long-term business impact and protection of company reputation"},
-                            {"n": 3, "title": "Encourages cross-functional collaboration", "dac": "Encourages cross-functional collaboration and supports decisions using relevant data and expertise"},
+                            {
+                                "n": 1,
+                                "title": "Makes timely decisions to resolve issues or problems and takes full responsibility for them, regardless of the outcome",
+                                "dac": "Makes clear and timely decisions, takes accountability for recommendations, and demonstrates ownership of outcomes",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Promotes and drives good stewardship of the company's resources and reputation",
+                                "dac": "Balances short-term decisions with long-term business impact, responsible use of resources, and protection of company reputation",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Builds the best team and empowers them to make decisions based on data and expertise",
+                                "dac": "Encourages cross-functional collaboration and supports decisions using relevant data and operational expertise",
+                            },
                         ]
                     },
                 },
             },
+
+            # ──────────────────────────────────────────────────────────────
+            # GROUP EXERCISE — WTP, LFDV, MaD
+            # ──────────────────────────────────────────────────────────────
             "ge": {
                 "name": "Group Exercise",
                 "short": "GE",
-                "candidate_role": "Senior Manager (group strategic discussion with peers)",
+                "candidate_role": (
+                    "Officer participating in a group strategic discussion "
+                    "with peers (Banco fictional case)"
+                ),
                 "competencies": {
-                    "DSP": {
-                        "kbis": [
-                            {"n": 1, "title": "Communicates compelling direction to energize the team", "dac": "Sets a clear direction and drives the group toward a high-quality strategic output"},
-                            {"n": 2, "title": "Creates strategy and drives execution", "dac": "Develops strong strategies, structures the discussion, and pushes for concrete decisions"},
-                            {"n": 3, "title": "Drives results-focused recommendations", "dac": "Grounds recommendations in data from the case and advocates for prioritized, actionable outcomes"},
-                        ]
-                    },
                     "WTP": {
                         "kbis": [
-                            {"n": 1, "title": "Creates collaborative and inclusive discussion", "dac": "Ensures all voices are heard and creates a safe environment for contributions"},
-                            {"n": 2, "title": "Inspires and motivates team toward shared outcome", "dac": "Rallies the group around a shared goal and maintains group energy and direction"},
-                            {"n": 3, "title": "Provides structure and direction to the group", "dac": "Helps the group stay on track and monitors progress toward the activity goal"},
+                            {
+                                "n": 1,
+                                "title": "Treats people with empathy and care and creates an enjoyable workplace",
+                                "dac": "Builds rapport and creates a respectful, collaborative discussion environment",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Inspires and motivates individuals and teams to high performance",
+                                "dac": "Builds alignment and commitment toward shared decisions",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Provides people with clear directions, standards of performance, and expectations and acts decisively to address poor performance",
+                                "dac": "Helps the group stay focused on priorities and move toward decisions",
+                            },
+                            {
+                                "n": 4,
+                                "title": "Commits to people development and career growth; provides coaching and mentoring",
+                                "dac": "Supports collaboration by enabling others to contribute effectively to group outcomes",
+                            },
                         ]
                     },
                     "LFDV": {
                         "kbis": [
-                            {"n": 1, "title": "Challenges assumptions and provokes better thinking", "dac": "Raises critical questions or reframes the problem to improve the quality of discussion"},
-                            {"n": 2, "title": "Draws on diverse perspectives to improve decisions", "dac": "Synthesizes multiple viewpoints and uses data to strengthen group recommendations"},
-                            {"n": 3, "title": "Adjusts position and incorporates better ideas", "dac": "Demonstrates openness to changing views when presented with better arguments or data"},
+                            {
+                                "n": 1,
+                                "title": "Proactively gives and seeks feedback to learn from each other. Listens to understand",
+                                "dac": "Asks thoughtful questions and listens actively to understand different viewpoints",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Speaks up to share his/her point of view or provide constructive feedback regardless of audience",
+                                "dac": "Shares ideas clearly and provides constructive challenge during discussion",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Draws on the diverse backgrounds, skills and knowledge of people and ensures that everyone can contribute",
+                                "dac": "Encourages contribution from others and builds on diverse perspectives",
+                            },
+                        ]
+                    },
+                    "MaD": {
+                        "kbis": [
+                            {
+                                "n": 1,
+                                "title": "Drives change and leads with courage; perseveres despite ambiguity",
+                                "dac": "Proactively suggests practical improvements and drives the discussion forward despite ambiguity",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Champions experimentation and encourages tenacity in learning and improving",
+                                "dac": "Explores alternative approaches and supports trying better solutions",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Remains curious and open to new ideas and experiences and considers issues from a multi-cultural or geographic perspective",
+                                "dac": "Brings broader market, customer, or regional perspectives into the discussion",
+                            },
                         ]
                     },
                 },
             },
+
+            # ──────────────────────────────────────────────────────────────
+            # COACHING ROLEPLAY — DSP, WTP, LFDV, ET
+            # ──────────────────────────────────────────────────────────────
             "cr": {
                 "name": "Coaching Roleplay",
                 "short": "CR",
-                "candidate_role": "Newly appointed COO / Senior Manager (coaching a direct report)",
+                "candidate_role": (
+                    "Officer conducting a coaching conversation with a direct report "
+                    "(Right to Wear fictional case)"
+                ),
                 "competencies": {
+                    "DSP": {
+                        "kbis": [
+                            {
+                                "n": 1,
+                                "title": "Communicates a compelling and inspiring vision or purpose to energize the team",
+                                "dac": "Sets clear performance expectations and standards",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Creates breakthrough strategies and stretched goals, and collaborates effectively to execute them with excellence",
+                                "dac": "Encourages accountability for performance outcomes and improvement actions",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Acts with the customer in mind; delights our customers with exceptional products and services",
+                                "dac": "Drives clear actions and follow-through for performance improvement aligned to customer impact",
+                            },
+                            {
+                                "n": 4,
+                                "title": "Anticipates, sees ahead, seeks, and rapidly acts on opportunities to elevate the business",
+                                "dac": "Identifies root causes and takes timely action to improve results",
+                            },
+                        ]
+                    },
                     "WTP": {
                         "kbis": [
-                            {"n": 1, "title": "Treats the coachee with empathy and care", "dac": "Listens first, acknowledges the coachee's perspective, and creates a safe space for the conversation"},
-                            {"n": 2, "title": "Inspires and motivates toward high performance", "dac": "Acknowledges strengths and frames improvement as achievable; rebuilds confidence where needed"},
-                            {"n": 3, "title": "Provides clear directions and expectations", "dac": "Sets specific, concrete expectations for performance improvement with agreed timelines"},
-                            {"n": 4, "title": "Develops and coaches team members", "dac": "Uses a coaching approach (asking, not just telling) to build the coachee's own thinking and capability"},
+                            {
+                                "n": 1,
+                                "title": "Treats people with empathy and care and creates an enjoyable workplace",
+                                "dac": "Builds rapport and creates a supportive coaching environment",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Inspires and motivates individuals and teams to high performance",
+                                "dac": "Encourages the employee to take accountability for performance improvement",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Provides people with clear directions, standards of performance, and expectations and acts decisively to address poor performance",
+                                "dac": "Provides clear, direct and constructive feedback and addresses performance gaps",
+                            },
+                            {
+                                "n": 4,
+                                "title": "Commits to people development and career growth; provides coaching and mentoring",
+                                "dac": "Supports development through coaching, guidance, and practical next steps",
+                            },
                         ]
                     },
                     "LFDV": {
                         "kbis": [
-                            {"n": 1, "title": "Listens to understand before acting", "dac": "Asks open-ended questions and listens actively before offering solutions or feedback"},
-                            {"n": 2, "title": "Speaks up constructively regardless of pushback", "dac": "Maintains clear feedback and expectations even when the coachee challenges or deflects"},
-                            {"n": 3, "title": "Adjusts approach based on what the coachee shares", "dac": "Adapts the coaching plan appropriately when given new information by the coachee"},
+                            {
+                                "n": 1,
+                                "title": "Proactively gives and seeks feedback to learn from each other. Listens to understand",
+                                "dac": "Asks thoughtful questions to understand performance issues and root causes",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Speaks up to share his/her point of view or provide constructive feedback regardless of audience",
+                                "dac": "Provides constructive feedback while remaining open to dialogue",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Draws on the diverse backgrounds, skills and knowledge of people and ensures that everyone can contribute",
+                                "dac": "Listens openly and responds with understanding to different perspectives",
+                            },
                         ]
                     },
                     "ET": {
                         "kbis": [
-                            {"n": 1, "title": "Makes timely decisions and takes accountability", "dac": "Takes clear ownership of the situation and commits to specific follow-through"},
-                            {"n": 2, "title": "Builds structure and empowers the coachee", "dac": "Creates a clear accountability framework (check-ins, milestones) that empowers the coachee to self-manage"},
-                            {"n": 3, "title": "Acts with integrity and follows through", "dac": "Closes the session with clear mutual commitments and a shared understanding of next steps"},
+                            {
+                                "n": 1,
+                                "title": "Makes timely decisions to resolve issues or problems and takes full responsibility for them, regardless of the outcome",
+                                "dac": "Takes personal ownership of decisions and follows through on commitments",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Promotes and drives good stewardship of the company's resources and reputation",
+                                "dac": "Balances short-term decisions with long-term business impact, responsible use of resources, and protection of company reputation",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Builds the best team and empowers them to make decisions based on data and expertise",
+                                "dac": "Addresses performance concerns clearly and empowers others to take ownership and make decisions based on available data and information",
+                            },
                         ]
                     },
                 },
             },
+
+            # ──────────────────────────────────────────────────────────────
+            # COMPETENCY-BASED INTERVIEW — All 5 competencies
+            # ──────────────────────────────────────────────────────────────
             "cbi": {
                 "name": "Competency-Based Interview",
                 "short": "CBI",
-                "candidate_role": "Officer / Manager (sharing real-world past experiences)",
+                "candidate_role": (
+                    "Officer sharing real past behavioral examples using the "
+                    "SBII (Situation-Behavior-Impact-Intent) format for all 5 "
+                    "Leadership Brands"
+                ),
                 "competencies": {
                     "DSP": {
                         "kbis": [
-                            {"n": 1, "title": "Drives results with clear business impact", "dac": "Shares a story where specific actions led to measurable business outcomes"},
-                            {"n": 2, "title": "Sets direction and leads execution", "dac": "Describes leading a project or initiative with clear direction, standards, and follow-through"},
+                            {
+                                "n": 1,
+                                "title": "Communicates a compelling and inspiring vision or purpose to energize the team",
+                                "dac": "Communicates clear recommendations and rationale aligned to business priorities",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Creates breakthrough strategies and stretched goals, and collaborates effectively to execute them with excellence",
+                                "dac": "Develops strong strategies and practical actions to improve business performance",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Acts with the customer in mind; delights our customers with exceptional products and services",
+                                "dac": "Considers customer impact and commercial implications in decisions",
+                            },
+                            {
+                                "n": 4,
+                                "title": "Anticipates, sees ahead, seeks, and rapidly acts on opportunities to elevate the business",
+                                "dac": "Recognizes risks and opportunities early and acts on them",
+                            },
                         ]
                     },
                     "WTP": {
                         "kbis": [
-                            {"n": 1, "title": "Handles underperformance with empathy and accountability", "dac": "Shares a story of managing a difficult or underperforming team member with both care and clear consequences"},
-                            {"n": 2, "title": "Coaches and develops others", "dac": "Describes a specific instance of developing someone's skills or capability through coaching or mentoring"},
-                            {"n": 3, "title": "Maintains team commitment under pressure", "dac": "Shares how they kept a team motivated and aligned during a difficult or high-pressure situation"},
+                            {
+                                "n": 1,
+                                "title": "Treats people with empathy and care and creates an enjoyable workplace",
+                                "dac": "Builds rapport and creates a supportive environment for difficult conversations",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Inspires and motivates individuals and teams to high performance",
+                                "dac": "Inspires and motivates individuals or teams toward a shared goal",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Provides people with clear directions, standards of performance, and expectations and acts decisively to address poor performance",
+                                "dac": "Provides clear expectations and acts decisively on underperformance",
+                            },
+                            {
+                                "n": 4,
+                                "title": "Commits to people development and career growth; provides coaching and mentoring",
+                                "dac": "Coaches and develops team members to grow capability",
+                            },
                         ]
                     },
                     "LFDV": {
                         "kbis": [
-                            {"n": 1, "title": "Proactively seeks and acts on feedback", "dac": "Shares a specific instance of asking for and meaningfully incorporating feedback from others"},
-                            {"n": 2, "title": "Resolves disagreement through data and diverse input", "dac": "Describes navigating a conflict of views using evidence or by bringing in different perspectives"},
-                            {"n": 3, "title": "Adjusts position when presented with better evidence", "dac": "Shares a time when they changed their stance based on a better idea or new information"},
+                            {
+                                "n": 1,
+                                "title": "Proactively gives and seeks feedback to learn from each other. Listens to understand",
+                                "dac": "Proactively seeks and acts on feedback; listens to understand different viewpoints",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Speaks up to share his/her point of view or provide constructive feedback regardless of audience",
+                                "dac": "Speaks up confidently and provides constructive challenge regardless of audience",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Draws on the diverse backgrounds, skills and knowledge of people and ensures that everyone can contribute",
+                                "dac": "Draws on diverse perspectives and ensures everyone can contribute",
+                            },
                         ]
                     },
                     "MaD": {
                         "kbis": [
-                            {"n": 1, "title": "Drives innovation or change despite resistance", "dac": "Shares a story of championing a new idea or process change and overcoming initial pushback"},
-                            {"n": 2, "title": "Encourages others to try new approaches", "dac": "Describes how they created space for experimentation or learning in their team or organization"},
+                            {
+                                "n": 1,
+                                "title": "Drives change and leads with courage; perseveres despite ambiguity",
+                                "dac": "Drives change and leads with courage despite resistance or ambiguity",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Champions experimentation and encourages tenacity in learning and improving",
+                                "dac": "Champions experimentation and encourages others to try new approaches",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Remains curious and open to new ideas and experiences and considers issues from a multi-cultural or geographic (regional/global) perspective",
+                                "dac": "Remains curious and considers issues from multiple cultural or geographic perspectives",
+                            },
                         ]
                     },
                     "ET": {
                         "kbis": [
-                            {"n": 1, "title": "Makes difficult decisions and owns the outcome", "dac": "Shares a situation requiring a hard judgment call and describes taking full accountability for the result"},
-                            {"n": 2, "title": "Empowers others and builds accountability", "dac": "Describes delegating meaningfully to a team member and creating a follow-through structure"},
-                        ]
-                    },
-                },
-            },
-        },
-    },
-    "first_loyalty": {
-        "name": "First Loyalty",
-        "activities": {
-            "ap": {
-                "name": "Analysis Presentation",
-                "short": "AP",
-                "candidate_role": "Account Manager (presenting to senior management)",
-                "competencies": {
-                    "DSP": {
-                        "kbis": [
-                            {"n": 1, "title": "Communicates clear recommendations and rationale", "dac": "Communicates clear recommendations and rationale aligned to business priorities"},
-                            {"n": 2, "title": "Creates breakthrough strategies and practical actions", "dac": "Develops strong strategies and practical actions to improve business performance"},
-                            {"n": 3, "title": "Acts with the customer in mind", "dac": "Considers customer impact and commercial implications in decisions"},
-                            {"n": 4, "title": "Anticipates risks and opportunities early", "dac": "Recognizes risks and opportunities early and recommends timely business action"},
-                        ]
-                    },
-                    "MaD": {
-                        "kbis": [
-                            {"n": 1, "title": "Drives change with practical improvements", "dac": "Suggests practical improvements to current business challenges"},
-                            {"n": 2, "title": "Takes initiative despite incomplete information", "dac": "Takes initiative in addressing issues despite incomplete information"},
-                            {"n": 3, "title": "Tests alternatives and adapts", "dac": "Tests alternatives, adapts recommendations, and incorporates broader perspectives"},
-                        ]
-                    },
-                    "ET": {
-                        "kbis": [
-                            {"n": 1, "title": "Makes clear and timely decisions", "dac": "Makes clear and timely decisions, takes accountability, and demonstrates ownership"},
-                            {"n": 2, "title": "Balances short-term and long-term stewardship", "dac": "Balances short-term decisions with long-term business impact and protection of company reputation"},
-                            {"n": 3, "title": "Encourages cross-functional collaboration", "dac": "Encourages cross-functional collaboration and supports decisions using relevant data and expertise"},
-                        ]
-                    },
-                },
-            },
-            "neg": {
-                "name": "Negotiation Role Play",
-                "short": "NEG",
-                "candidate_role": "Account Manager (managing a client escalation / negotiation)",
-                "competencies": {
-                    "DSP": {
-                        "kbis": [
-                            {"n": 1, "title": "Identifies the most important issue and prioritizes action", "dac": "Identifies the most important issue and prioritizes action to protect the client relationship"},
-                            {"n": 2, "title": "Provides practical, well-structured solutions", "dac": "Provides practical, well-structured solutions with clear rationale"},
-                            {"n": 3, "title": "Balances customer needs and company interests", "dac": "Balances customer needs, commercial impact, and company interests in decisions"},
-                            {"n": 4, "title": "Recognizes opportunities to strengthen partnership", "dac": "Recognizes opportunities to strengthen the long-term partnership beyond issue resolution"},
-                        ]
-                    },
-                    "WTP": {
-                        "kbis": [
-                            {"n": 1, "title": "Builds rapport and manages with empathy", "dac": "Builds rapport and manages the conversation with empathy, professionalism, and respect"},
-                            {"n": 2, "title": "Rebuilds confidence and secures commitment", "dac": "Rebuilds confidence and gains commitment toward sustained partnership and next steps"},
-                            {"n": 3, "title": "Sets clear expectations and addresses accountability", "dac": "Sets clear expectations and addresses performance concerns through defined accountability"},
-                            {"n": 4, "title": "Builds shared ownership and buy-in", "dac": "Builds client buy-in by creating shared ownership and commitment to agreed actions"},
-                        ]
-                    },
-                    "LFDV": {
-                        "kbis": [
-                            {"n": 1, "title": "Asks thoughtful questions and listens actively", "dac": "Asks thoughtful questions and listens actively to understand the client's concerns"},
-                            {"n": 2, "title": "Shares views and provides constructive challenge", "dac": "Shares views clearly and provides constructive challenge while maintaining openness"},
-                            {"n": 3, "title": "Draws on client's perspective to improve decisions", "dac": "Draws on the client's perspective and uses it to improve decisions and next steps"},
-                        ]
-                    },
-                    "ET": {
-                        "kbis": [
-                            {"n": 1, "title": "Takes clear ownership and follows through", "dac": "Takes clear ownership of issues and follows through on commitments"},
-                            {"n": 2, "title": "Balances recovery with long-term stewardship", "dac": "Balances immediate client recovery with long-term business impact and protection of company reputation"},
-                            {"n": 3, "title": "Enables confident, well-informed decisions", "dac": "Enables confident, well-informed decisions by establishing clear ownership and accountability"},
+                            {
+                                "n": 1,
+                                "title": "Makes timely decisions to resolve issues or problems and takes full responsibility for them, regardless of the outcome",
+                                "dac": "Makes difficult or timely decisions and takes full accountability for outcomes",
+                            },
+                            {
+                                "n": 2,
+                                "title": "Promotes and drives good stewardship of the company's resources and reputation",
+                                "dac": "Promotes responsible stewardship of company resources and reputation",
+                            },
+                            {
+                                "n": 3,
+                                "title": "Builds the best team and empowers them to make decisions based on data and expertise",
+                                "dac": "Builds team capability and empowers others to make data-driven decisions",
+                            },
                         ]
                     },
                 },
@@ -231,20 +451,24 @@ def get_activity(program_code: str, activity_code: str) -> dict | None:
 
 
 def build_kbi_prompt(program_code: str, activity_code: str) -> str:
+    """Build a structured KBI reference string for the AI analysis prompt."""
     activity = get_activity(program_code, activity_code)
     if not activity:
         return ""
     lines = []
     for comp_code, comp_data in activity["competencies"].items():
         comp_name = COMP_META[comp_code]["name"]
+        comp_desc = COMP_META[comp_code]["desc"]
         lines.append(f"\n## {comp_code} — {comp_name}")
+        lines.append(f"Definition: {comp_desc}")
         for kbi in comp_data["kbis"]:
-            lines.append(f"  KBI {kbi['n']}: {kbi['title']}")
-            lines.append(f"  DAC context: {kbi['dac']}")
+            lines.append(f"\n  KBI {kbi['n']}: {kbi['title']}")
+            lines.append(f"  DAC equivalent behavior: {kbi['dac']}")
     return "\n".join(lines)
 
 
 def get_comp_order(program_code: str, activity_code: str) -> list[str]:
+    """Return competency codes in display order for a given activity."""
     activity = get_activity(program_code, activity_code)
     if not activity:
         return []
