@@ -124,6 +124,59 @@ def replace_cell_text(cell, new_text: str, prefix: str = ""):
         run._r.insert(0, copy.deepcopy(first_rpr))
 
 
+_SBII_LABELS = ["Situation:", "Behavior:", "Impact:", "Intent:"]
+
+
+def write_sbii_to_cell(cell, header_text: str, narrative: str):
+    """
+    Write an SBII narrative into a cell with bold labels.
+    Produces one paragraph per section: bold "Situation:" label + normal body text.
+    Falls back to plain text if no SBII labels are found.
+    """
+    # Clear all existing content
+    for para in cell.paragraphs:
+        for run in para.runs:
+            run.text = ""
+        for child in list(para._p):
+            tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+            if tag in ("r", "hyperlink", "bookmarkStart", "bookmarkEnd", "proofErr"):
+                para._p.remove(child)
+
+    # Header line (e.g. "Follow the Situation-Behavior-Impact-Intent (SBII) format")
+    cell.paragraphs[0].add_run(header_text)
+
+    # Parse narrative into (label, body) pairs
+    sections = []
+    current_label = None
+    current_text = []
+    for line in narrative.split("\n"):
+        stripped = line.strip()
+        matched = next((lb for lb in _SBII_LABELS if stripped.startswith(lb)), None)
+        if matched:
+            if current_label is not None:
+                sections.append((current_label, " ".join(current_text).strip()))
+            current_label = matched
+            rest = stripped[len(matched):].strip()
+            current_text = [rest] if rest else []
+        elif stripped and current_label is not None:
+            current_text.append(stripped)
+    if current_label is not None:
+        sections.append((current_label, " ".join(current_text).strip()))
+
+    if not sections:
+        # Fallback: no labels detected — write as plain text
+        p = cell.add_paragraph()
+        p.add_run(narrative)
+        return
+
+    for label, body in sections:
+        p = cell.add_paragraph()
+        run_label = p.add_run(label + " ")
+        run_label.bold = True
+        if body:
+            p.add_run(body)
+
+
 def update_header_table(doc: Document, candidate_name: str, date: str, assessors: str):
     """Update Table 0: participant name, date, assessors."""
     t = doc.tables[0]
@@ -363,8 +416,9 @@ def _update_report_comp_section(doc: Document, comp_code: str, comp_data: dict,
     if len(table.rows) > 6 and cbi_evidence:
         r6_cells = get_unique_cells(table.rows[6])
         if r6_cells:
-            replace_cell_text(r6_cells[0],
-                              f"Follow the Situation-Behavior-Impact-Intent (SBII) format\n{cbi_evidence}")
+            write_sbii_to_cell(r6_cells[0],
+                               "Follow the Situation-Behavior-Impact-Intent (SBII) format",
+                               cbi_evidence)
 
 
 def generate_dac_report(candidate: dict, all_confirmed: dict, consolidated: dict) -> io.BytesIO:
@@ -408,12 +462,26 @@ def generate_dac_report(candidate: dict, all_confirmed: dict, consolidated: dict
             if not comp_data_act:
                 continue
             if act_code == "cbi":
-                cbi_lines = [f"KBI {k['n']}: {k.get('evidence', '')}"
-                             for k in comp_data_act.get("kbis", [])]
-                cbi_evidence = "\n\n".join(cbi_lines)
+                # Use the SBII narrative if available, otherwise fall back to KBI notes
+                if comp_data_act.get("narrative"):
+                    cbi_evidence = comp_data_act["narrative"]
+                else:
+                    cbi_lines = [f"KBI {k['n']}: {k.get('evidence', '')}"
+                                 for k in comp_data_act.get("kbis", [])]
+                    cbi_evidence = "\n\n".join(cbi_lines)
             else:
-                lines = [f"KBI {k['n']} — {k['title']} (Rating: {k.get('suggested_rating','?')})\n{k.get('evidence','')}"
-                         for k in comp_data_act.get("kbis", [])]
+                # Format as clean KBI title + bullet evidence (no "KBI N —" prefix)
+                lines = []
+                for k in comp_data_act.get("kbis", []):
+                    evidence_raw = k.get("evidence", "")
+                    # Handle evidence as list (new format) or string (legacy)
+                    if isinstance(evidence_raw, list):
+                        bullet_texts = [str(b).strip().lstrip("•-").strip() for b in evidence_raw if str(b).strip()]
+                    else:
+                        bullet_texts = [b.strip().lstrip("•-").strip() for b in str(evidence_raw).split("\n") if b.strip()]
+                    if bullet_texts:
+                        bullets = [f"• {bt}" for bt in bullet_texts if bt]
+                        lines.append(f"{k['title']} (Rating: {k.get('suggested_rating', '?')})\n" + "\n".join(bullets))
                 activity_evidence.append("\n\n".join(lines))
 
         # Use consolidated data for overall rating display

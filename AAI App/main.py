@@ -6,11 +6,11 @@ import io
 from datetime import datetime
 from pathlib import Path
 from contextlib import asynccontextmanager
+
 import jinja2 as _jinja2
 from fastapi import FastAPI, Request, Form, File, UploadFile, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-
 import anthropic
 from docx import Document
 
@@ -41,12 +41,16 @@ def init_db():
         CREATE TABLE IF NOT EXISTS candidates (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
+            honorific TEXT DEFAULT 'Ms.',
             position TEXT,
             assessment_date TEXT,
             assessors TEXT,
             program TEXT DEFAULT 'accelerate',
             created_at TEXT
         );
+        -- Add honorific column if upgrading from older schema
+        CREATE TABLE IF NOT EXISTS _migrations (id TEXT PRIMARY KEY);
+
 
         CREATE TABLE IF NOT EXISTS activities (
             id TEXT PRIMARY KEY,
@@ -78,6 +82,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
 # ---------------------------------------------------------------------------
 # Template engine — direct Jinja2, bypasses Starlette wrapper entirely
 # ---------------------------------------------------------------------------
@@ -170,6 +177,61 @@ def get_or_create_activity(conn, candidate_id: str, activity_code: str, program:
 # ---------------------------------------------------------------------------
 # AI Analysis
 # ---------------------------------------------------------------------------
+STRUCTURED_WRITING_RULES = """
+WRITING RULES FOR BEHAVIORAL OBSERVATIONS — ABSOLUTE RULES, NO EXCEPTIONS:
+
+THE "evidence" FIELD IS A JSON ARRAY OF SHORT STRINGS — NOT A PROSE PARAGRAPH.
+Each element in the array is one short bullet phrase. Write 3–6 array items per KBI.
+
+FORMAT PER ARRAY ITEM:
+- Short past-tense verb phrase — NOT a full sentence
+- Start with a VERB or prepositional phrase
+- The implied subject is the participant — NEVER write "Candidate" or any subject word
+- No period at the end
+
+NAME AND PRONOUN RULES — ABSOLUTE:
+- NEVER use the candidate's name in any form — even if it appears in the transcript, pretend it isn't there
+- NEVER use any pronoun for the candidate: no he/she/his/her/they/their
+- NEVER name fictional characters or role-players (e.g. Charlene, Sam, Fred)
+  → Replace with: "the coachee", "the direct report", "the panel", "the groupmate"
+- Replace fictional company/product names with "the company", "the product"
+
+GOOD evidence array:
+["Opened with two strategic priorities: core business and portfolio expansion",
+ "When pressed by the panel for actionable steps, deferred to needing team alignment first",
+ "Acknowledged 26% business exposure as a significant risk factor"]
+
+BAD (never do this):
+["Elaine presented her recommendations to the panel",  ← name + pronoun
+ "Charlene asked for clarification",                   ← fictional character name
+ "The candidate proposed a solution"]                  ← uses "candidate" as subject
+"""
+
+CBI_WRITING_RULES = """
+WRITING RULES FOR INTERVIEW SECTION (strict — no exceptions):
+
+For the "evidence" field of each KBI:
+- Write brief factual notes in past tense to support the rating (assessor reference only)
+- No name, no pronouns in the per-KBI evidence notes
+
+For the "narrative" field of each COMPETENCY (goes directly into the official DAC report):
+- Write FOUR labeled paragraphs using EXACTLY these headers — no exceptions:
+
+  Situation: [describe the context or challenge {salutation} faced]
+
+  Behavior: [describe the specific actions and behaviors {salutation} demonstrated]
+
+  Impact: [describe the results or effect of those actions]
+
+  Intent: [describe {salutation}'s stated goal, learning, or intent going forward]
+
+- Each label (Situation:, Behavior:, Impact:, Intent:) must start a new paragraph
+- Refer to the participant as "{salutation}" — use He/She pronouns as appropriate
+- Past tense, professional assessor tone
+- Pick the single most illustrative story from the interview for this competency
+- This goes directly into the printed DAC report — polish the language accordingly
+"""
+
 ANALYSIS_PROMPT = """You are an expert assessor for the Jollibee Group Development Assessment Center (DAC) {program_name} program.
 
 Your task is to analyze a transcript from the {activity_name} activity and suggest ratings for each KBI based strictly on evidence from the transcript.
@@ -185,20 +247,22 @@ RATING SCALE:
 3 - Consistently Demonstrates: Regularly demonstrates the behavior in the expected manner
 4 - Exceeds Expectations: Many commendable instances; clearly positive impact on others
 
-RULES:
+RATING RULES:
 - Only rate based on what ACTUALLY appears in the transcript
-- Evidence must reference specific quotes or behaviors — not general impressions
-- Format evidence as: "[Direct quote or paraphrase]" — [explanation of mapping to this KBI]
 - Mixed or inconsistent evidence = Level 2
 - Consistently strong throughout = Level 3
 - Level 4 requires multiple standout, above-expectation moments
 - Level 1 requires notable failures or consistent opposite behaviors
 - For group exercises: only assess THIS candidate's specific contributions, not the group overall
 
+{writing_rules}
+
 TRANSCRIPT:
 {transcript_text}
 
-Return ONLY valid JSON (no markdown, no explanation outside the JSON):
+Return ONLY valid JSON (no markdown, no explanation outside the JSON).
+
+For structured exercises (AP, GE, CR):
 {{
   "competencies": {{
     "COMP_CODE": {{
@@ -207,11 +271,34 @@ Return ONLY valid JSON (no markdown, no explanation outside the JSON):
           "n": 1,
           "title": "KBI title",
           "suggested_rating": 2,
-          "evidence": "Evidence and explanation"
+          "evidence": [
+            "Short past-tense verb phrase — no name, no pronouns",
+            "Another short phrase starting with a verb",
+            "Third phrase — 3 to 6 items per KBI"
+          ]
         }}
       ],
       "overall": 2,
       "rationale": "One-sentence rationale for the overall rating"
+    }}
+  }}
+}}
+
+For the CBI interview, evidence is a string of brief assessor notes; narrative is the SBII write-up:
+{{
+  "competencies": {{
+    "COMP_CODE": {{
+      "kbis": [
+        {{
+          "n": 1,
+          "title": "KBI title",
+          "suggested_rating": 2,
+          "evidence": "Brief assessor note supporting the rating (no name, no pronouns)"
+        }}
+      ],
+      "overall": 2,
+      "rationale": "One-sentence rationale for the overall rating",
+      "narrative": "Situation: [context paragraph using salutation and pronouns]\n\nBehavior: [actions paragraph]\n\nImpact: [results paragraph]\n\nIntent: [future intent paragraph]"
     }}
   }}
 }}"""
@@ -259,6 +346,21 @@ def run_analysis(candidate_id: str, activity_code: str):
         kbi_defs = build_kbi_prompt(program_code, activity_code)
         program_name = PROGRAMS[program_code]["name"]
 
+        # Derive last name: handle "Last, First" or "First Last" formats
+        full_name = cand.get("name", "")
+        if "," in full_name:
+            last_name = full_name.split(",")[0].strip()
+        else:
+            last_name = full_name.strip().split()[-1] if full_name.strip() else full_name
+        honorific = cand.get("honorific", "Ms.")
+        salutation = f"{honorific} {last_name}"
+
+        # Choose writing rules based on activity type
+        if activity_code == "cbi":
+            writing_rules = CBI_WRITING_RULES.format(salutation=salutation)
+        else:
+            writing_rules = STRUCTURED_WRITING_RULES
+
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         message = client.messages.create(
             model="claude-sonnet-4-5",
@@ -270,6 +372,7 @@ def run_analysis(candidate_id: str, activity_code: str):
                     activity_name=activity_def["name"],
                     candidate_role=activity_def["candidate_role"],
                     kbi_definitions=kbi_defs,
+                    writing_rules=writing_rules,
                     transcript_text=transcript_text[:40000],
                 )
             }]
@@ -334,6 +437,7 @@ async def home(request: Request):
 async def new_candidate(
     request: Request,
     name: str = Form(...),
+    honorific: str = Form("Ms."),
     position: str = Form(""),
     assessment_date: str = Form(""),
     assessors: str = Form(""),
@@ -342,8 +446,8 @@ async def new_candidate(
     cid = str(uuid.uuid4())
     conn = get_db()
     conn.execute(
-        "INSERT INTO candidates (id, name, position, assessment_date, assessors, program, created_at) VALUES (?,?,?,?,?,?,?)",
-        (cid, name.strip(), position.strip(), assessment_date, assessors.strip(), program, datetime.utcnow().isoformat())
+        "INSERT INTO candidates (id, name, honorific, position, assessment_date, assessors, program, created_at) VALUES (?,?,?,?,?,?,?,?)",
+        (cid, name.strip(), honorific, position.strip(), assessment_date, assessors.strip(), program, datetime.utcnow().isoformat())
     )
     # Pre-create activity rows for this program
     prog_acts = PROGRAMS.get(program, {}).get("activities", {})
